@@ -14877,6 +14877,10 @@ $inputXML = @'
                                     <MenuItem FontSize="{DynamicResource ButtonFontSize}" Header="Export" Name="ExportMenuItem" Foreground="{DynamicResource MainForegroundColor}">
                                         <MenuItem.ToolTip><ToolTip Content="Export the selected items to a file."/></MenuItem.ToolTip>
                                     </MenuItem>
+                                    <Separator Name="RemoteHostMenuSeparator"/>
+                                    <MenuItem FontSize="{DynamicResource ButtonFontSize}" Header="Remote Host" Name="RemoteHostMenuItem" Foreground="{DynamicResource MainForegroundColor}">
+                                        <MenuItem.ToolTip><ToolTip Content="Share this PC so a PULSE Client can connect (Alt+R)."/></MenuItem.ToolTip>
+                                    </MenuItem>
                                     <Separator/>
                                     <MenuItem FontSize="{DynamicResource ButtonFontSize}" Header="About" Name="AboutMenuItem" Foreground="{DynamicResource MainForegroundColor}"/>
                                 </StackPanel>
@@ -17217,6 +17221,10 @@ $sync["ImportMenuItem"].Add_Click({
 $sync["ExportMenuItem"].Add_Click({
     Invoke-WPFPopup -Action "Hide" -Popups @("Settings")
     Invoke-WPFImpex -type "export"
+})
+$sync["RemoteHostMenuItem"].Add_Click({
+    Invoke-WPFPopup -Action "Hide" -Popups @("Settings")
+    Invoke-WPFTab "WPFTab8BT"
 })
 $sync["AboutMenuItem"].Add_Click({
     Invoke-WPFPopup -Action "Hide" -Popups @("Settings")
@@ -20545,6 +20553,8 @@ $remoteSettings = $script:Remote.Settings
 
 if ($script:RemoteIsHost) {
     $rd.lblRemoteNav.Text = 'Remote Host'
+    # Remote Host lives in the Settings (gear) menu instead of the sidebar
+    $sync['WPFTab8BT'].Visibility = 'Collapsed'
     $rd.rdHostPanel.Visibility = 'Visible'
     $script:PulsePages[7] = @('[07]', 'REMOTE HOST', 'Share this PC so a PULSE Client can see and control it - like Parsec.', '> MODULE ....... REMOTE HOST', '> EDITION ...... HOST')
     $sync.Form.Title = $sync.Form.Title + '  [HOST]'
@@ -20637,6 +20647,8 @@ if ($script:RemoteIsHost) {
     $sync.PulseRemoteInit = { Update-RemoteAddresses; Update-RemoteHost; Update-RadminPanel }
 } else {
     $rd.lblRemoteNav.Text = 'Remote Play'
+    $sync['RemoteHostMenuItem'].Visibility = 'Collapsed'
+    $sync['RemoteHostMenuSeparator'].Visibility = 'Collapsed'
     $rd.rdClientPanel.Visibility = 'Visible'
     $script:PulsePages[7] = @('[07]', 'REMOTE PLAY', 'Connect to a PULSE Host and use it from here - like Parsec.', '> MODULE ....... REMOTE CLIENT', '> EDITION ...... CLIENT')
     $sync.Form.Title = $sync.Form.Title + '  [CLIENT]'
