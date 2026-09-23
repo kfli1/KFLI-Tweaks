@@ -19,7 +19,7 @@
 $ErrorActionPreference = 'Stop'
 
 # --- EDIT THIS to match your repo ------------------------------------------
-$RepoRawUrl = 'https://raw.githubusercontent.com/kfli1/KFLI-Tweaks/refs/heads/main/KFLI_Gaming_Tweak_v1.4.ps1'
+$RepoRawUrl = 'https://raw.githubusercontent.com/kfli1/KFLI-Tweaks/refs/heads/main/KFLI_Gaming_Tweak.ps1'
 # -----------------------------------------------------------------------------
 
 try {
