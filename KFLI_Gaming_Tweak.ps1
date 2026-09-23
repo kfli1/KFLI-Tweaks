@@ -19984,6 +19984,10 @@ $RemoteFpsValues     = @(15, 30, 60)
 $RemoteQualityValues = @(40, 60, 75, 90)
 $RemoteScaleValues   = @(100, 75, 50)
 
+# Access code is disabled in this build: host and client both use this fixed shared
+# key for the connection handshake, so no code has to be typed or copied around.
+$script:PulseNoCodeKey = 'PULSE-KFLI-NOCODE-2026'
+
 function Write-RemoteLog {
     param([string]$Message, [string]$Type = 'INFO')
     $color = '#8A9099'
@@ -20297,8 +20301,6 @@ function Join-RadminNetwork {
 function Set-RemoteHostInputs {
     param([bool]$Enabled)
     $rd.rdHostPort.IsReadOnly = -not $Enabled
-    $rd.rdHostCode.IsReadOnly = -not $Enabled
-    $rd.rdHostNewCode.IsEnabled = $Enabled
     $rd.rdHostFirewall.IsEnabled = $Enabled
 }
 
@@ -20307,8 +20309,7 @@ function Start-RemoteHost {
     if (-not [int]::TryParse($rd.rdHostPort.Text.Trim(), [ref]$port) -or $port -lt 1024 -or $port -gt 65535) {
         Write-RemoteLog 'Port must be a number between 1024 and 65535.' 'ERR'; return
     }
-    $code = $rd.rdHostCode.Text.Trim()
-    if ($code.Length -lt 6) { Write-RemoteLog 'The access code must be at least 6 characters.' 'ERR'; return }
+    $code = $script:PulseNoCodeKey
     if (-not (Initialize-PulseRemoteEngine)) { return }
     if (-not $script:Remote.Host) { $script:Remote.Host = New-Object PulseRemote.Host }
     $h = $script:Remote.Host
@@ -20415,7 +20416,6 @@ function Update-RemoteRecent {
         $btn.Add_Click({
             $rd.rdCliAddr.Text = [string]$this.Tag.A
             $rd.rdCliPort.Text = [string]$this.Tag.P
-            $rd.rdCliCode.Focus() | Out-Null
         })
         $btn.Add_MouseDoubleClick({ Start-RemoteClient })
         [void]$rd.rdCliRecent.Children.Add($btn)
@@ -20451,8 +20451,7 @@ function Update-RemoteFound {
         $btn.Add_Click({
             $rd.rdCliAddr.Text = [string]$this.Tag.Address
             $rd.rdCliPort.Text = [string]$this.Tag.Port
-            if ($rd.rdCliCode.Text.Trim().Length -ge 6) { Start-RemoteClient }
-            else { Write-RemoteLog ('Enter the access code shown on ' + $this.Tag.Name + ', then press CONNECT.') 'INFO'; $rd.rdCliCode.Focus() | Out-Null }
+            Start-RemoteClient
         })
         [System.Windows.Controls.DockPanel]::SetDock($btn, 'Right')
         [void]$dock.Children.Add($btn)
@@ -20501,7 +20500,7 @@ function Start-RemoteScan {
 
 function Start-RemoteClient {
     $addr = $rd.rdCliAddr.Text.Trim()
-    $code = $rd.rdCliCode.Text.Trim()
+    $code = $script:PulseNoCodeKey
     # "1.2.3.4:47800" style input: split the port off (IPv6 addresses have more than one colon)
     if ($addr -match '^([^:]+):(\d{1,5})$') {
         $addr = $Matches[1]
@@ -20513,7 +20512,6 @@ function Start-RemoteClient {
     if (-not [int]::TryParse($rd.rdCliPort.Text.Trim(), [ref]$port) -or $port -lt 1 -or $port -gt 65535) {
         Write-RemoteLog 'Port must be a number between 1 and 65535.' 'ERR'; return
     }
-    if ($code.Length -lt 6) { Write-RemoteLog 'Enter the access code shown on the host.' 'ERR'; return }
     if (-not (Initialize-PulseRemoteEngine)) { return }
 
     $fps     = $RemoteFpsValues[[math]::Max(0, $rd.rdCliFps.SelectedIndex)]
@@ -20550,13 +20548,15 @@ if ($script:RemoteIsHost) {
     $rd.rdHostPanel.Visibility = 'Visible'
     $script:PulsePages[7] = @('[07]', 'REMOTE HOST', 'Share this PC so a PULSE Client can see and control it - like Parsec.', '> MODULE ....... REMOTE HOST', '> EDITION ...... HOST')
     $sync.Form.Title = $sync.Form.Title + '  [HOST]'
-    $rd.rdTips.Text = "> 1. Press START HOSTING.`n> 2. Send the client this PC's address + the access code.`n> 3. Accept the request when it pops up.`n`n> SAME NETWORK : use the 192.168.x.x address.`n> OVER INTERNET: turn on INTERNET ACCESS and send the internet address. If your router or ISP blocks it, install Tailscale on both PCs and use its 100.x address.
+    $rd.rdTips.Text = "> 1. Press START HOSTING.`n> 2. Send the client this PC's address (no access code needed).`n> 3. Accept the request when it pops up - keep ASK BEFORE ALLOWING on, it's your only gate now that the code is disabled.`n`n> SAME NETWORK : use the 192.168.x.x address.`n> OVER INTERNET: turn on INTERNET ACCESS and send the internet address. If your router or ISP blocks it, install Tailscale on both PCs and use its 100.x address.
 > Every session is encrypted (AES-256).`n`n> Press Ctrl+D on this PC at any time to disconnect the client.`n> Windows lock screen and UAC prompts cannot be streamed."
 
     $rd.rdHostPort.Text = [string]$remoteSettings.HostPort
-    $code = [string]$remoteSettings.HostCode
-    if ($code.Length -lt 6) { $code = New-RemoteCode }
-    $rd.rdHostCode.Text = $code
+    $rd.rdHostCode.Text = $script:PulseNoCodeKey
+    $rd.rdHostCode.IsReadOnly = $true
+    $rd.rdHostNewCode.IsEnabled = $false
+    $rd.rdHostNewCode.ToolTip = 'Access code is disabled in this build.'
+    $rd.rdHostCopy.ToolTip = 'Access code is disabled - nothing to share.'
     $rd.rdHostAsk.IsChecked      = [bool]$remoteSettings.HostAsk
     $rd.rdHostViewOnly.IsChecked = [bool]$remoteSettings.HostViewOnly
     $rd.rdHostFirewall.IsChecked = [bool]$remoteSettings.HostFirewall
@@ -20568,7 +20568,7 @@ if ($script:RemoteIsHost) {
         Update-RemoteHost
     })
     $rd.rdHostKick.Add_Click({ if ($script:Remote.Host) { $script:Remote.Host.Kick() } })
-    $rd.rdHostNewCode.Add_Click({ $rd.rdHostCode.Text = New-RemoteCode; Save-RemoteSettings })
+    $rd.rdHostNewCode.Add_Click({ Write-RemoteLog 'Access code is disabled in this build.' 'INFO' })
     $rd.rdHostCopy.Add_Click({
         try { [System.Windows.Clipboard]::SetText($rd.rdHostCode.Text.Trim()); Write-RemoteLog 'Access code copied.' 'INFO' } catch {}
     })
@@ -20640,8 +20640,11 @@ if ($script:RemoteIsHost) {
     $rd.rdClientPanel.Visibility = 'Visible'
     $script:PulsePages[7] = @('[07]', 'REMOTE PLAY', 'Connect to a PULSE Host and use it from here - like Parsec.', '> MODULE ....... REMOTE CLIENT', '> EDITION ...... CLIENT')
     $sync.Form.Title = $sync.Form.Title + '  [CLIENT]'
-    $rd.rdTips.Text = "> 1. On the other PC open PULSE HOST and press START HOSTING.`n> 2. Pick it under HOSTS ON YOUR NETWORK, or type its address. From another network paste the host's internet address (IP:PORT). Then enter the access code.`n> 3. Press CONNECT and wait for the host to accept.`n`n> IN THE VIEWER`n>   Ctrl+Alt+Shift+F : fullscreen`n>   Ctrl+Alt+Shift+Q : disconnect`n>   Keys and mouse go to the host while the viewer is focused.`n`n> LAGGY? Lower the resolution to 75% / 50% or the quality first, then the frame rate. Use a cable instead of Wi-Fi for gaming."
+    $rd.rdTips.Text = "> 1. On the other PC open PULSE HOST and press START HOSTING.`n> 2. Pick it under HOSTS ON YOUR NETWORK, or type its address. From another network paste the host's internet address (IP:PORT).`n> 3. Press CONNECT and wait for the host to accept - no access code needed.`n`n> IN THE VIEWER`n>   Ctrl+Alt+Shift+F : fullscreen`n>   Ctrl+Alt+Shift+Q : disconnect`n>   Keys and mouse go to the host while the viewer is focused.`n`n> LAGGY? Lower the resolution to 75% / 50% or the quality first, then the frame rate. Use a cable instead of Wi-Fi for gaming."
 
+    $rd.rdCliCode.Text = 'not needed'
+    $rd.rdCliCode.IsReadOnly = $true
+    $rd.rdCliCode.IsEnabled = $false
     $rd.rdCliPort.Text = [string]$remoteSettings.CliPort
     $rd.rdCliFps.SelectedIndex     = [math]::Min(2, [math]::Max(0, [int]$remoteSettings.CliFps))
     $rd.rdCliQuality.SelectedIndex = [math]::Min(3, [math]::Max(0, [int]$remoteSettings.CliQuality))
