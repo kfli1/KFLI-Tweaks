@@ -7121,8 +7121,9 @@ function Invoke-WPFTab {
     $tabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
     $tabNumber = [int]($ClickedTab -replace "WPFTab","" -replace "BT","") - 1
 
-    # Keep navigation available. License checks belong to protected actions,
-    # not page selection, so the page itself can always be opened and explained.
+    # Tweaks is a licensed feature: require a valid device-bound license before opening it.
+    if ($tabNumber -eq 1 -and -not (Require-KfliLicense -Feature 'Tweaks')) { return }
+
     $filter = Get-WinUtilVariables -Type ToggleButton | Where-Object {$psitem -like "WPFTab?BT"}
     $sync.$tabNav.Items[$tabNumber].IsSelected = $true
     ($sync.GetEnumerator()).where{$psitem.Key -in $filter} | ForEach-Object {
