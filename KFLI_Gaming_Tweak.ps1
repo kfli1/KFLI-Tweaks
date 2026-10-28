@@ -26,10 +26,6 @@
    - WinUtil logs : %LOCALAPPDATA%\winutil\logs
    - Optional: put logo.png next to this script to use your own logo image.
 
-  Credits:
-   The Install, Tweaks, Config, Updates, Win11 Creator and AppX pages are built on
-   WinUtil by Chris Titus Tech (https://github.com/ChrisTitusTech/winutil),
-   used under the MIT License:
 
    Copyright (c) 2022 CT Tech Group LLC
 
