@@ -25,7 +25,7 @@
    - PULSE backup : PULSE-Backup.json     (original values, used by Restore)
    - WinUtil logs : %LOCALAPPDATA%\winutil\logs
    - Optional: put logo.png next to this script to use your own logo image.
-
+  Third-party MIT license notice:
 
    Copyright (c) 2022 CT Tech Group LLC
 
@@ -2008,21 +2008,6 @@ function Invoke-WinUtilFontScaling {
     }
 }
 
-function Invoke-WinUtilInstallPSProfile {
-    if (-not (Get-Command wt)) {
-        Write-Host "Windows Terminal not found. Installing..."
-        Install-WinUtilWinget
-        winget install Microsoft.WindowsTerminal --source winget --silent
-    }
-
-    if (-not (Get-Command pwsh)) {
-        Write-Host "PowerShell 7 not found. Installing..."
-        Install-WinUtilWinget
-        winget install Microsoft.PowerShell --source winget --installer-type wix --silent
-    }
-
-    wt new-tab pwsh -NoExit -Command "irm https://github.com/ChrisTitusTech/powershell-profile/raw/main/setup.ps1 | iex"
-}
 
 function Write-WinUtilISOLog {
     param([string]$Message)
@@ -3611,10 +3596,6 @@ function Invoke-WinUtilScript {
 
 }
 
-Function Invoke-WinUtilSponsors {
-    $sponsors = ([regex]::Matches(([regex]::Match((Invoke-RestMethod https://github.com/sponsors/ChrisTitusTech),'(?s)(?<=Current sponsors).*?(?=Past sponsors)')).Value,'(?<=alt="@)[^"]+')).Value | Where-Object {$_ -ne "ChrisTitusTech"}
-    return $sponsors
-}
 
 function Invoke-WinUtilSSHServer {
     <#
@@ -5697,7 +5678,6 @@ function Invoke-WPFButton {
     Param ([string]$Button)
 
     # Use this to get the name of the button
-    #[System.Windows.MessageBox]::Show("$Button","Chris Titus Tech's Windows Utility","OK","Info")
     if (-not $sync.ProcessRunning -and -not $sync.Win11ISOProcessRunning) {
         Set-WinUtilTweaksProgressIndicator -Visible $false
     }
@@ -6245,7 +6225,7 @@ function Invoke-WPFImpex {
                     }
                     $jsonFile = $allConfs | ConvertTo-Json
                     $jsonFile | Out-File $Config -Force
-                    "iex ""& { `$(irm https://christitus.com/win) } -Config '$Config'""" | Set-Clipboard
+                    Set-Clipboard -Value $Config
                 }
             } catch {
                 Write-Error "An error occurred while exporting: $_"
@@ -10886,7 +10866,7 @@ $sync.configs.feature = @'
       "NetFx3"
     ],
     "InvokeScript": [],
-    "link": "https://winutil.christitus.com/code-reference/features/features/dotnet"
+    "link": ""
   },
   "WPFFixesNTPPool": {
     "Content": "NTP Server - Enable",
@@ -10896,7 +10876,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFFixesNTPPool",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/ntppool"
+    "link": ""
   },
   "WPFFeatureshyperv": {
     "Content": "Hyper-V - Enable",
@@ -10906,7 +10886,7 @@ $sync.configs.feature = @'
     "feature": [
       "Microsoft-Hyper-V-All"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/hyperv"
+    "link": ""
   },
   "WPFFeatureslegacymedia": {
     "Content": "Legacy Media Components (WMP, DirectPlay) - Enable",
@@ -10920,7 +10900,7 @@ $sync.configs.feature = @'
       "LegacyComponents"
     ],
     "InvokeScript": [],
-    "link": "https://winutil.christitus.com/code-reference/features/features/legacymedia"
+    "link": ""
   },
   "WPFFeaturewsl": {
     "Content": "Windows Subsystem for Linux (WSL) - Enable",
@@ -10932,7 +10912,7 @@ $sync.configs.feature = @'
       "Microsoft-Windows-Subsystem-Linux"
     ],
     "InvokeScript": [],
-    "link": "https://winutil.christitus.com/code-reference/features/features/wsl"
+    "link": ""
   },
   "WPFFeaturenfs": {
     "Content": "Network File System (NFS) - Enable",
@@ -10951,7 +10931,7 @@ $sync.configs.feature = @'
       "nfsadmin client start",
       "nfsadmin client localhost config fileaccess=755 SecFlavors=+sys -krb5 -krb5i"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/nfs"
+    "link": ""
   },
   "WPFFeatureRegBackup": {
     "Content": "Registry Backup (Daily Task 12:30am) - Enable",
@@ -10962,7 +10942,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "\r\n      New-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Configuration Manager' -Name 'EnablePeriodicBackup' -Type DWord -Value 1 -Force\r\n      New-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Configuration Manager' -Name 'BackupCount' -Type DWord -Value 2 -Force\r\n      $action = New-ScheduledTaskAction -Execute 'schtasks' -Argument '/run /i /tn \"\\Microsoft\\Windows\\Registry\\RegIdleBackup\"'\r\n      $trigger = New-ScheduledTaskTrigger -Daily -At 00:30\r\n      Register-ScheduledTask -Action $action -Trigger $trigger -TaskName 'AutoRegBackup' -Description 'Create System Registry Backups' -User 'System'\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/regbackup"
+    "link": ""
   },
   "WPFFeatureEnableLegacyRecovery": {
     "Content": "Legacy F8 Boot Recovery - Enable",
@@ -10973,7 +10953,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "bcdedit /set bootmenupolicy legacy"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/enablelegacyrecovery"
+    "link": ""
   },
   "WPFFeatureDisableLegacyRecovery": {
     "Content": "Legacy F8 Boot Recovery - Disable",
@@ -10984,7 +10964,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "bcdedit /set bootmenupolicy standard"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/disablelegacyrecovery"
+    "link": ""
   },
   "WPFFeaturesSandbox": {
     "Content": "Windows Sandbox - Enable",
@@ -10994,7 +10974,7 @@ $sync.configs.feature = @'
     "feature": [
       "Containers-DisposableClientVM"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/features/sandbox"
+    "link": ""
   },
   "WPFFeatureInstall": {
     "Content": "Install Features",
@@ -11003,7 +10983,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFFeatureInstall",
-    "link": "https://winutil.christitus.com/code-reference/features/features/install"
+    "link": ""
   },
   "WPFPanelAutologin": {
     "Content": "AutoLogon - Run",
@@ -11012,7 +10992,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFPanelAutologin",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/autologin"
+    "link": ""
   },
   "WPFFixesUpdate": {
     "Content": "Windows Update - Reset",
@@ -11021,7 +11001,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFFixesUpdate",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/update"
+    "link": ""
   },
   "WPFFixesNetwork": {
     "Content": "Network - Reset",
@@ -11030,7 +11010,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFFixesNetwork",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/network"
+    "link": ""
   },
   "WPFPanelDISM": {
     "Content": "System Corruption Scan - Run",
@@ -11039,7 +11019,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFSystemRepair",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/dism"
+    "link": ""
   },
   "WPFFixesWinget": {
     "Content": "WinGet - Reinstall",
@@ -11048,7 +11028,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFFixesWinget",
-    "link": "https://winutil.christitus.com/code-reference/features/fixes/winget"
+    "link": ""
   },
   "WPFPanelComputer": {
     "Content": "Computer Management",
@@ -11059,7 +11039,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "compmgmt.msc"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/computer"
+    "link": ""
   },
   "WPFPanelControl": {
     "Content": "Control Panel",
@@ -11070,7 +11050,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "control"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/control"
+    "link": ""
   },
   "WPFPanelMouse": {
     "Content": "Mouse Properties",
@@ -11081,7 +11061,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "main.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/mouse"
+    "link": ""
   },
   "WPFPanelNetwork": {
     "Content": "Network Connections",
@@ -11092,7 +11072,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "ncpa.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/network"
+    "link": ""
   },
   "WPFPanelPower": {
     "Content": "Power Panel",
@@ -11103,7 +11083,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "powercfg.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/power"
+    "link": ""
   },
   "WPFPanelPrinter": {
     "Content": "Printer Panel",
@@ -11114,7 +11094,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "Start-Process 'shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}'"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/printer"
+    "link": ""
   },
   "WPFPanelPrograms": {
     "Content": "Programs and Features",
@@ -11125,7 +11105,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "appwiz.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/programs"
+    "link": ""
   },
   "WPFPanelRegion": {
     "Content": "Region",
@@ -11136,7 +11116,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "intl.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/region"
+    "link": ""
   },
   "WPFPanelSecurity": {
     "Content": "Security and Maintenance",
@@ -11147,7 +11127,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "wscui.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/security"
+    "link": ""
   },
   "WPFPanelSound": {
     "Content": "Sound Settings",
@@ -11158,7 +11138,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "mmsys.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/sound"
+    "link": ""
   },
   "WPFPanelSystem": {
     "Content": "System Properties",
@@ -11169,7 +11149,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "sysdm.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/system"
+    "link": ""
   },
   "WPFPanelTimedate": {
     "Content": "Time and Date",
@@ -11180,7 +11160,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "timedate.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/timedate"
+    "link": ""
   },
   "WPFPanelFirewall": {
     "Content": "Windows Defender Firewall",
@@ -11191,7 +11171,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "firewall.cpl"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/firewall"
+    "link": ""
   },
   "WPFPanelRestore": {
     "Content": "Windows Restore",
@@ -11202,7 +11182,7 @@ $sync.configs.feature = @'
     "InvokeScript": [
       "rstrui.exe"
     ],
-    "link": "https://winutil.christitus.com/code-reference/features/legacy-windows-panels/restore"
+    "link": ""
   },
   "WPFWinUtilInstallPSProfile": {
     "Content": "CTT PowerShell Profile - Install",
@@ -11211,7 +11191,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WinUtilInstallPSProfile",
-    "link": "https://winutil.christitus.com/code-reference/features/powershell-profile-powershell-7--only/installpsprofile"
+    "link": ""
   },
   "WPFWinUtilUninstallPSProfile": {
     "Content": "CTT PowerShell Profile - Remove",
@@ -11220,7 +11200,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WinUtilUninstallPSProfile",
-    "link": "https://winutil.christitus.com/code-reference/features/powershell-profile-powershell-7--only/uninstallpsprofile"
+    "link": ""
   },
   "WPFWinUtilSSHServer": {
     "Content": "OpenSSH Server - Enable",
@@ -11229,7 +11209,7 @@ $sync.configs.feature = @'
     "Type": "Button",
     "ButtonWidth": "300",
     "function": "Invoke-WPFSSHServer",
-    "link": "https://winutil.christitus.com/code-reference/features/remote-access/sshserver"
+    "link": ""
   }
 }
 '@ | ConvertFrom-Json
@@ -11468,7 +11448,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/activity"
+    "link": ""
   },
   "WPFTweaksHiber": {
     "Content": "Hibernation - Disable",
@@ -11497,7 +11477,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "powercfg.exe /hibernate on"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/hiber"
+    "link": ""
   },
   "WPFTweaksWidget": {
     "Content": "Widgets - Remove",
@@ -11507,7 +11487,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      # Sometimes if you dont stop the Widgets process the removal may fail\r\n\r\n      Get-Process *Widget* | Stop-Process\r\n      Get-AppxPackage Microsoft.WidgetsPlatformRuntime -AllUsers | Remove-AppxPackage -AllUsers\r\n      Get-AppxPackage MicrosoftWindows.Client.WebExperience -AllUsers | Remove-AppxPackage -AllUsers\r\n\r\n      Invoke-WinUtilExplorerUpdate -action \"restart\"\r\n      Write-Host \"Removed widgets\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/widget"
+    "link": ""
   },
   "WPFTweaksRevertStartMenu": {
     "Content": "Start Menu Previous Layout - Enable",
@@ -11523,7 +11503,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/revertstartmenu"
+    "link": ""
   },
   "WPFTweaksDisableStoreSearch": {
     "Content": "Microsoft Store Recommended Search Results - Disable",
@@ -11536,7 +11516,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "icacls \"$Env:LocalAppData\\Packages\\Microsoft.WindowsStore_8wekyb3d8bbwe\\LocalState\\store.db\" /grant Everyone:F"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/disablestoresearch"
+    "link": ""
   },
   "WPFTweaksLocation": {
     "Content": "Location Tracking - Disable",
@@ -11573,7 +11553,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "1"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/location"
+    "link": ""
   },
   "WPFTweaksServices": {
     "Content": "Services - Set to Manual",
@@ -11610,7 +11590,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      $Memory = (Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum / 1KB\r\n      Set-ItemProperty -Path \"HKLM:\\SYSTEM\\CurrentControlSet\\Control\" -Name SvcHostSplitThresholdInKB -Value $Memory\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/services"
+    "link": ""
   },
   "WPFTweaksBraveDebloat": {
     "Content": "Brave Browser - Debloat",
@@ -11703,7 +11683,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/bravedebloat"
+    "link": ""
   },
   "WPFTweaksDisableWarningForUnsignedRdp": {
     "Content": "RDP Unsigned File Warnings - Disable",
@@ -11726,7 +11706,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/disablewarningforunsignedrdp"
+    "link": ""
   },
   "WPFTweaksEdgeDebloat": {
     "Content": "Microsoft Edge - Debloat",
@@ -11854,7 +11834,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/edgedebloat"
+    "link": ""
   },
   "WPFTweaksConsumerFeatures": {
     "Content": "ConsumerFeatures - Disable",
@@ -11870,7 +11850,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/consumerfeatures"
+    "link": ""
   },
   "WPFTweaksTelemetry": {
     "Content": "Telemetry - Disable",
@@ -11969,7 +11949,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      # Enable Defender Auto Sample Submission\r\n      Set-MpPreference -SubmitSamplesConsent 1\r\n\r\n      # Enable (Connected User Experiences and Telemetry) Service\r\n      Set-Service -Name diagtrack -StartupType Automatic\r\n\r\n      # Enable (Windows Error Reporting Manager) Service\r\n      Set-Service -Name wermgr -StartupType Automatic\r\n\r\n      # Enable PowerShell 7 telemetry\r\n      [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '', 'Machine')\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/telemetry"
+    "link": ""
   },
   "WPFTweaksDeliveryOptimization": {
     "Content": "Delivery Optimization - Disable",
@@ -11985,7 +11965,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/deliveryoptimization"
+    "link": ""
   },
   "WPFTweaksRemoveEdge": {
     "Content": "Microsoft Edge - Remove",
@@ -11998,7 +11978,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Write-Host \"Installing Microsoft Edge...\"\r\n      winget install Microsoft.Edge --source winget\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/removeedge"
+    "link": ""
   },
   "WPFTweaksDisableBitLocker": {
     "Content": "BitLocker - Disable",
@@ -12011,7 +11991,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "Enable-BitLocker -MountPoint $Env:SystemDrive"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/disablebitlocker"
+    "link": ""
   },
   "WPFTweaksUTC": {
     "Content": "Date & Time - Set Time to UTC",
@@ -12027,7 +12007,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "0"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/utc"
+    "link": ""
   },
   "WPFTweaksRemoveOneDrive": {
     "Content": "Microsoft OneDrive - Remove",
@@ -12040,7 +12020,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Write-Host \"Installing OneDrive\"\r\n      winget install Microsoft.Onedrive --source winget\r\n\r\n      # Enabled OneSyncSvc\r\n      Set-Service -Name OneSyncSvc -StartupType Automatic\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/removeonedrive"
+    "link": ""
   },
   "WPFTweaksRemoveHomeAndGallery": {
     "Content": "File Explorer Home and Gallery - Disable",
@@ -12070,7 +12050,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/removehomeandgallery"
+    "link": ""
   },
   "WPFTweaksDisplay": {
     "Content": "Visual Effects - Set to Best Performance",
@@ -12169,7 +12149,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "Remove-ItemProperty -Path \"HKCU:\\Control Panel\\Desktop\" -Name \"UserPreferencesMask\""
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/display"
+    "link": ""
   },
   "WPFTweaksReservedStorage": {
     "Content": "Disable Reserved Storage",
@@ -12182,7 +12162,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "DISM /Online /Set-ReservedStorageState /State:Enabled"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/reservedstorage"
+    "link": ""
   },
   "WPFTweaksRestorePoint": {
     "Content": "Restore Point - Create",
@@ -12202,7 +12182,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      if (-not (Get-ComputerRestorePoint)) {\r\n          Enable-ComputerRestore -Drive $Env:SystemDrive\r\n      }\r\n\r\n      Checkpoint-Computer -Description \"System Restore Point created by PULSE\" -RestorePointType MODIFY_SETTINGS\r\n      Write-Host \"System Restore Point Created Successfully\" -ForegroundColor Green\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/restorepoint"
+    "link": ""
   },
   "WPFTweaksEndTaskOnTaskbar": {
     "Content": "End Task With Right Click - Enable",
@@ -12218,7 +12198,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/endtaskontaskbar"
+    "link": ""
   },
   "WPFTweaksStorage": {
     "Content": "Storage Sense - Disable",
@@ -12234,7 +12214,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "1"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/storage"
+    "link": ""
   },
   "WPFTweaksWindowsAI": {
     "Content": "Windows AI - Disable And Remove",
@@ -12260,7 +12240,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      $Appx = (Get-AppxPackage MicrosoftWindows.Client.CoreAI).PackageFullName\r\n      $Sid = (Get-LocalUser $Env:UserName).Sid.Value\r\n\r\n      New-Item \"HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Appx\\AppxAllUserStore\\EndOfLife\\$Sid\\$Appx\" -Force\r\n\r\n      Get-AppxPackage -AllUsers \"*Copilot*\" | Remove-AppxPackage -AllUsers\r\n      winget uninstall -e --name \"Copilot\" --silent --force --accept-source-agreements 2>$null\r\n      Get-AppxPackage -AllUsers Microsoft.MicrosoftOfficeHub | Remove-AppxPackage -AllUsers\r\n\r\n      if ($Appx) {\r\n          Remove-AppxPackage $Appx\r\n      }\r\n\r\n      Set-Service -Name WSAIFabricSvc -StartupType Disabled\r\n      Disable-WindowsOptionalFeature -FeatureName Recall -Online -NoRestart\r\n\r\n      Write-Host \"Windows AI Disabled\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/windowsai"
+    "link": ""
   },
   "WPFTweaksWPBT": {
     "Content": "Windows Platform Binary Table (WPBT) - Disable",
@@ -12276,7 +12256,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/wpbt"
+    "link": ""
   },
   "WPFTweaksPreventDeviceMetadataFromNetwork": {
     "Content": "Prevent Device Companion Apps",
@@ -12292,7 +12272,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/preventdevicemetadatafromnetwork"
+    "link": ""
   },
   "WPFTweaksRazerBlock": {
     "Content": "Razer Software Auto-Install - Disable",
@@ -12321,7 +12301,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      icacls \"$Env:SystemRoot\\Installer\\Razer\" /remove:d Everyone\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/razerblock"
+    "link": ""
   },
   "WPFTweaksDisableNotifications": {
     "Content": "System Tray Notifications & Calendar - Disable",
@@ -12344,7 +12324,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "1"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/disablenotifications"
+    "link": ""
   },
   "WPFTweaksBlockAdobeNet": {
     "Content": "Adobe URL Block List - Enable",
@@ -12357,7 +12337,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Set-Content \"$Env:SystemRoot\\System32\\drivers\\etc\\hosts\" (\r\n          (Get-Content \"$Env:SystemRoot\\System32\\drivers\\etc\\hosts\") -join \"`n\" -replace '(?s)#New Ver.*', ''\r\n      )\r\n\r\n      ipconfig /flushdns\r\n      Write-Host 'Removed Adobe url block list from host file'\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/blockadobenet"
+    "link": ""
   },
   "WPFTweaksRightClickMenu": {
     "Content": "Right-Click Menu Previous Layout - Enable",
@@ -12370,7 +12350,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "Remove-Item -Path \"HKCU:\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\" -Recurse"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/rightclickmenu"
+    "link": ""
   },
   "WPFTweaksDiskCleanup": {
     "Content": "Disk Cleanup - Run",
@@ -12380,7 +12360,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      cleanmgr.exe /d C: /VERYLOWDISK\r\n      Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/diskcleanup"
+    "link": ""
   },
   "WPFTweaksDeleteTempFiles": {
     "Content": "Temporary Files - Remove",
@@ -12390,7 +12370,7 @@ $sync.configs.tweaks = @'
     "InvokeScript": [
       "\r\n      Remove-Item -Path \"$Env:Temp\\*\" -Recurse -Force\r\n      Remove-Item -Path \"$Env:SystemRoot\\Temp\\*\" -Recurse -Force\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/deletetempfiles"
+    "link": ""
   },
   "WPFTweaksIPv46": {
     "Content": "IPv6 - Set IPv4 as Preferred",
@@ -12406,7 +12386,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "0"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/ipv46"
+    "link": ""
   },
   "WPFTweaksTeredo": {
     "Content": "Teredo - Disable",
@@ -12428,7 +12408,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "netsh interface teredo set state default"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/teredo"
+    "link": ""
   },
   "WPFTweaksDisableIPv6": {
     "Content": "IPv6 - Disable",
@@ -12450,7 +12430,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "Enable-NetAdapterBinding -Name * -ComponentID ms_tcpip6"
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/disableipv6"
+    "link": ""
   },
   "WPFTweaksDisableBGapps": {
     "Content": "Background Apps - Disable",
@@ -12466,7 +12446,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "0"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/disablebgapps"
+    "link": ""
   },
   "WPFTweaksDisableExplorerAutoDiscovery": {
     "Content": "File Explorer Automatic Folder Discovery - Disable",
@@ -12479,7 +12459,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      # Previously detected folders\r\n      $bags = \"HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\Bags\"\r\n\r\n      # Folder types lookup table\r\n      $bagMRU = \"HKCU:\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\BagMRU\"\r\n\r\n      # Flush Explorer view database\r\n      Remove-Item -Path $bags -Recurse -Force\r\n      Write-Host \"Removed $bags\"\r\n\r\n      Remove-Item -Path $bagMRU -Recurse -Force\r\n      Write-Host \"Removed $bagMRU\"\r\n\r\n      Write-Host Please sign out and back in, or restart your computer to apply the changes!\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/essential-tweaks/disableexplorerautodiscovery"
+    "link": ""
   },
   "WPFToggleDetailedBSoD": {
     "Content": "BSoD Verbose Mode",
@@ -12505,7 +12485,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/detailedbsod"
+    "link": ""
   },
   "WPFToggleBatteryPercentage": {
     "Content": "System Tray Battery Percentage",
@@ -12523,7 +12503,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/batterypercentage"
+    "link": ""
   },
   "WPFToggleDarkMode": {
     "Content": "Dark Theme for Windows",
@@ -12555,7 +12535,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Invoke-WinUtilExplorerUpdate\r\n      if ($sync.ThemeButton.Content -eq [char]0xF08C) {\r\n        Invoke-WinutilThemeChange -theme \"Auto\"\r\n      }\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/darkmode"
+    "link": ""
   },
   "WPFToggleShowExt": {
     "Content": "File Explorer File Extensions",
@@ -12579,7 +12559,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Invoke-WinUtilExplorerUpdate -action \"restart\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/showext"
+    "link": ""
   },
   "WPFToggleHiddenFiles": {
     "Content": "File Explorer Hidden Files",
@@ -12603,7 +12583,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Invoke-WinUtilExplorerUpdate -action \"restart\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/hiddenfiles"
+    "link": ""
   },
   "WPFToggleVerboseLogon": {
     "Content": "Logon Verbose Mode",
@@ -12621,7 +12601,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/verboselogon"
+    "link": ""
   },
   "WPFToggleNewOutlook": {
     "Content": "Microsoft Outlook New Version",
@@ -12663,7 +12643,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/newoutlook"
+    "link": ""
   },
   "WPFToggleScrollbars": {
     "Content": "Scrollbars Always Visible",
@@ -12681,7 +12661,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/scrollbars"
+    "link": ""
   },
   "WPFMultiplaneOverlay": {
     "Content": "Multiplane Overlay",
@@ -12719,7 +12699,7 @@ $sync.configs.tweaks = @'
         }
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/multiplaneoverlay"
+    "link": ""
   },
   "WPFToggleMouseAcceleration": {
     "Content": "Mouse Acceleration",
@@ -12753,7 +12733,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/mouseacceleration"
+    "link": ""
   },
   "WPFToggleNumLock": {
     "Content": "Num Lock on Startup",
@@ -12779,7 +12759,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/numlock"
+    "link": ""
   },
   "WPFToggleWindowSnapping": {
     "Content": "Window Snapping",
@@ -12797,7 +12777,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/windowsnapping"
+    "link": ""
   },
   "WPFToggleStandbyFix": {
     "Content": "S0 Sleep Network Connectivity",
@@ -12815,7 +12795,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/standbyfix"
+    "link": ""
   },
   "WPFToggleS3Sleep": {
     "Content": "S3 Sleep",
@@ -12833,7 +12813,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/s3sleep"
+    "link": ""
   },
   "WPFToggleHideSettingsHome": {
     "Content": "Settings Home Page",
@@ -12851,7 +12831,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/hidesettingshome"
+    "link": ""
   },
   "WPFToggleBingSearch": {
     "Content": "Start Menu Bing Search",
@@ -12869,7 +12849,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/bingsearch"
+    "link": ""
   },
   "WPFToggleLoginBlur": {
     "Content": "Logon Screen Acrylic Blur",
@@ -12887,7 +12867,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/loginblur"
+    "link": ""
   },
   "WPFTweaksDisableLockscreen": {
     "Content": "Lock Screen - Disable",
@@ -12904,7 +12884,7 @@ $sync.configs.tweaks = @'
         "OriginalValue": "<RemoveEntry>"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/disablelockscreen"
+    "link": ""
   },
   "WPFToggleStartMenuRecommendations": {
     "Content": "Start Menu Recommendations",
@@ -12944,7 +12924,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Invoke-WinUtilExplorerUpdate -action \"restart\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/startmenurecommendations"
+    "link": ""
   },
   "WPFToggleStickyKeys": {
     "Content": "Sticky Keys",
@@ -12962,7 +12942,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/stickykeys"
+    "link": ""
   },
   "WPFToggleTaskbarAlignment": {
     "Content": "Taskbar Centered Icons",
@@ -12986,7 +12966,7 @@ $sync.configs.tweaks = @'
     "UndoScript": [
       "\r\n      Invoke-WinUtilExplorerUpdate -action \"restart\"\r\n      "
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/taskbaralignment"
+    "link": ""
   },
   "WPFToggleTaskbarSearch": {
     "Content": "Taskbar Search Icon",
@@ -13004,7 +12984,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/taskbarsearch"
+    "link": ""
   },
   "WPFToggleTaskView": {
     "Content": "Taskbar Task View Icon",
@@ -13022,7 +13002,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/taskview"
+    "link": ""
   },
   "WPFToggleGameMode": {
     "Content": "Game Mode",
@@ -13048,7 +13028,7 @@ $sync.configs.tweaks = @'
         "DefaultState": "true"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/gamemode"
+    "link": ""
   },
   "WPFToggleLongPaths": {
     "Content": "Enable Long Paths",
@@ -13066,14 +13046,14 @@ $sync.configs.tweaks = @'
         "DefaultState": "false"
       }
     ],
-    "link": "https://winutil.christitus.com/code-reference/tweaks/customize-preferences/longpaths"
+    "link": ""
   },
   "WPFOOSUbutton": {
     "Content": "O&O ShutUp10++ - Run",
     "category": "z__Advanced Tweaks - CAUTION",
     "panel": "1",
     "Type": "Button",
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/oosubutton"
+    "link": ""
   },
   "WPFchangedns": {
     "Content": "DNS - Set to:",
@@ -13081,7 +13061,7 @@ $sync.configs.tweaks = @'
     "panel": "1",
     "Type": "Combobox",
     "ComboItems": "Default DHCP Google Cloudflare Cloudflare_Malware Cloudflare_Malware_Adult Open_DNS Quad9 AdGuard_Ads_Trackers AdGuard_Ads_Trackers_Malware_Adult Mullvad Mullvad_Ads_Trackers Mullvad_Ads_Trackers_Malware Mullvad_Ads_Trackers_Malware_Social Mullvad_Ads_Trackers_Malware_Adult_Gambling Mullvad_Ads_Trackers_Malware_Adult_Gambling_Social",
-    "link": "https://winutil.christitus.com/code-reference/tweaks/z--advanced-tweaks---caution/changedns"
+    "link": ""
   },
   "WPFAddUltPerf": {
     "Content": "Ultimate Performance Profile - Enable",
@@ -13089,7 +13069,7 @@ $sync.configs.tweaks = @'
     "panel": "2",
     "Type": "Button",
     "ButtonWidth": "300",
-    "link": "https://winutil.christitus.com/code-reference/tweaks/performance-plans---not-for-laptops/addultperf"
+    "link": ""
   },
   "WPFRemoveUltPerf": {
     "Content": "Ultimate Performance Profile - Disable",
@@ -13097,7 +13077,7 @@ $sync.configs.tweaks = @'
     "panel": "2",
     "Type": "Button",
     "ButtonWidth": "300",
-    "link": "https://winutil.christitus.com/code-reference/tweaks/performance-plans---not-for-laptops/removeultperf"
+    "link": ""
   }
 }
 '@ | ConvertFrom-Json
