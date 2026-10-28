@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  PULSE | Gaming Tweak - v2.0 (WPF)
+  PULSE | Gaming Tweak - v2.1 MFG Lab (WPF)
   Brand : KFLI // The Digital Shadow
   ------------------------------------------------------------
   Pages:
@@ -12814,7 +12814,7 @@ $sync.configs.tweaks = @'
 # 1. Shared state
 # ---------------------------------------------------------------------------
 
-$BuildVersion = '2.0'
+$BuildVersion = '2.1 MFG Preview'
 $LogQueue = New-Object 'System.Collections.Concurrent.ConcurrentQueue[object]'
 $Shared = [hashtable]::Synchronized(@{
     Cpu = $null; Ram = $null; Gpu = $null
@@ -15009,6 +15009,12 @@ $inputXML = @'
                                 <TextBlock x:Name="lblRemoteNav" Style="{StaticResource PulseNavText}" Text="Remote"/>
                             </StackPanel>
                         </ToggleButton>
+                        <ToggleButton Name="WPFTab9BT" Style="{StaticResource PulseNavButton}" ToolTip="MFG Lab (Alt+M)">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource PulseNavIcon}" Text="&#xE945;"/>
+                                <TextBlock Style="{StaticResource PulseNavText}" Text="MFG Lab"/>
+                            </StackPanel>
+                        </ToggleButton>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -16261,6 +16267,113 @@ $inputXML = @'
                     </Grid>
                 </Grid>
             </TabItem>
+            <TabItem Header="MFG Lab" Visibility="Collapsed" Name="WPFTab9">
+                <Grid Background="{StaticResource PageBg}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="14" MaxWidth="1280" HorizontalAlignment="Center">
+                            <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,14">
+                                <Grid Margin="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Rectangle Width="6" Height="22" Fill="{StaticResource Accent}" Margin="0,0,10,0"/>
+                                            <TextBlock Text="MFG LAB" Foreground="{StaticResource TextMain}" FontFamily="Bahnschrift, Segoe UI" FontSize="25" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <TextBlock Text="PER-GAME FRAME GENERATION MOD MANAGER" Foreground="{StaticResource Accent2}" FontFamily="Consolas" FontSize="10.5" Margin="16,4,0,0"/>
+                                        <TextBlock Text="Install MFG Bridge 0.507 from the PULSE GitHub Release, or choose another DLL source." Foreground="{StaticResource TextDim}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#17180B" BorderBrush="{StaticResource Accent}" BorderThickness="1" Padding="12,8" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse Name="MfgStatusDot" Width="9" Height="9" Fill="{StaticResource TextFaint}" Margin="0,0,8,0"/>
+                                            <TextBlock Name="MfgStatusText" Text="NOT CONFIGURED" Foreground="{StaticResource TextMain}" FontFamily="Consolas" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.35*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="12,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Rectangle Width="6" Height="6" Fill="{StaticResource Accent}" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="INSTALL TARGET" Style="{StaticResource HeadText}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <StackPanel Margin="14,12,14,14">
+                                                <TextBlock Text="GAME FOLDER" Foreground="{StaticResource TextDim}" FontFamily="Consolas" FontSize="10.5" Margin="0,0,0,6"/>
+                                                <Grid Margin="0,0,0,14">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                    <TextBox Name="MfgGamePathBox" Grid.Column="0" Height="32" VerticalContentAlignment="Center" ToolTip="Select the actual folder containing the game's executable."/>
+                                                    <Button Name="MfgBrowseGameButton" Grid.Column="1" Content="BROWSE" Style="{StaticResource FlatBtn}" Height="32" Margin="8,0,0,0" Padding="12,3"/>
+                                                </Grid>
+
+                                                <TextBlock Text="LOADER FILENAME" Foreground="{StaticResource TextDim}" FontFamily="Consolas" FontSize="10.5" Margin="0,0,0,6"/>
+                                                <ComboBox Name="MfgTargetNameCombo" Height="32" SelectedIndex="0" HorizontalAlignment="Left" MinWidth="230" Margin="0,0,0,6">
+                                                    <ComboBoxItem Content="version.dll"/>
+                                                    <ComboBoxItem Content="winhttp.dll"/>
+                                                    <ComboBoxItem Content="dbghelp.dll"/>
+                                                    <ComboBoxItem Content="cryptsp.dll"/>
+                                                    <ComboBoxItem Content="XINPUT9_1_0.dll"/>
+                                                    <ComboBoxItem Content="IPHLPAPI.dll"/>
+                                                </ComboBox>
+                                                <TextBlock Text="version.dll is the default. Choose another name only if the game or another mod already uses it." Foreground="{StaticResource TextFaint}" FontSize="10.5" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                                <WrapPanel>
+                                                    <Button Name="MfgEnableButton" Content="ENABLE MFG  /  INSTALL" Style="{StaticResource ActionBtn}" Background="#1F1E0C" BorderBrush="{StaticResource Accent}" Height="42" Padding="15,5" Margin="0,0,8,8"/>
+                                                    <Button Name="MfgDisableButton" Content="DISABLE MFG  /  RESTORE" Style="{StaticResource ActionBtn}" Height="42" Padding="15,5" Margin="0,0,8,8"/>
+                                                    <Button Name="MfgRefreshButton" Content="CHECK STATUS" Style="{StaticResource FlatBtn}" Height="42" Padding="15,5" Margin="0,0,8,8"/>
+                                                </WrapPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="12,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Rectangle Width="6" Height="6" Fill="{StaticResource Accent}" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="COMPATIBILITY NOTES" Style="{StaticResource HeadText}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <StackPanel Margin="14,10,14,12">
+                                                <TextBlock Text="• This is a per-game DLL hook, not a global NVIDIA driver switch." Foreground="{StaticResource TextDim}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                                <TextBlock Text="• The game must already use NVIDIA DLSS Frame Generation for this mod to hook it; it will not add FG to every game." Foreground="{StaticResource TextDim}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                                <TextBlock Text="• Recommended for single-player only. Avoid multiplayer or anti-cheat-protected games." Foreground="{StaticResource TextDim}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                                <TextBlock Text="• RTX 20-series support is experimental. Success and stability vary by game, driver, and mod version." Foreground="{StaticResource TextDim}" FontSize="11.5" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <Border Style="{StaticResource PanelBorder}" Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="12,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Rectangle Width="6" Height="6" Fill="{StaticResource Accent}" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="ACTIVITY LOG" Style="{StaticResource HeadText}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ListBox Name="MfgLogList" MinHeight="300" MaxHeight="500" Background="Transparent" BorderThickness="0" Padding="8,6" Foreground="{StaticResource TextDim}" FontFamily="Consolas" FontSize="10.5" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
             </TabControl>
             </Grid>
         </Grid>
@@ -17011,6 +17124,7 @@ $commonKeyEvents = {
             "A" { Invoke-WPFButton "WPFTab6BT"; $keyEventArgs.Handled = $true } # Navigate to AppX tab
             "D" { Invoke-WPFButton "WPFTab7BT"; $keyEventArgs.Handled = $true } # Navigate to PULSE Dashboard
             "R" { Invoke-WPFButton "WPFTab8BT"; $keyEventArgs.Handled = $true } # Navigate to Remote page
+            "M" { Invoke-WPFButton "WPFTab9BT"; $keyEventArgs.Handled = $true } # Navigate to MFG Lab
         }
     }
     # Handle Ctrl key combinations for specific actions
@@ -17344,6 +17458,7 @@ $script:PulsePages = @{
     3 = @('[04]', 'UPDATES',       'Decide how Windows Update behaves on this PC.',                   '> MODULE ....... UPDATE POLICY', '> RESTART AFTER SWITCHING')
     4 = @('[05]', 'WIN11 CREATOR', 'Build a clean Windows 11 ISO or a ready-to-boot USB drive.',      '> MODULE ....... IMAGE BUILDER', '> OFFICIAL MICROSOFT ISO ONLY')
     5 = @('[06]', 'APPX',          'Add or remove the apps that ship with Windows.',                  '> MODULE ....... STORE APPS',  '> APPLIES TO ALL USERS')
+    8 = @('[09]', 'MFG LAB',       'Manage per-game NVIDIA MFG Bridge installation and restoration.',   '> MODULE ....... FRAME GENERATION', '> BACK UP FIRST - SINGLE PLAYER ONLY')
 }
 $sync.PulsePageHeader = {
     param($index)
@@ -17358,6 +17473,331 @@ $sync.PulsePageHeader = {
     $sync.Form.FindName('lblPageHint').Text = $page[4]
     $header.Visibility = 'Visible'
 }
+
+# ---------------------------------------------------------------------------
+# PULSE MFG Lab - local per-game DLL manager
+# The bundled DLL is stored beside this script in PULSE-MFG-Bundle.
+# Game files are backed up and tracked by SHA-256 so Disable can restore safely.
+# ---------------------------------------------------------------------------
+$script:MfgStateDir   = Join-Path $DataDir 'PULSE-MFG-State'
+$script:MfgBackupRoot = Join-Path $DataDir 'PULSE-MFG-Backups'
+$script:MfgConfigFile = Join-Path $DataDir 'PULSE-MFG-Config.json'
+$script:MfgBundledDll = Join-Path $ScriptRoot 'PULSE-MFG-Bundle\nvngx.dll'
+$script:MfgDownloadUrl = 'https://github.com/kfli1/KFLI-Tweaks/releases/latest/download/nvngx.dll'
+$script:MfgExpectedSha256 = 'F047D0D707B04C67CB4E9BA07FA5FBB05BD8C4151240A4F3FB0B0926985A43DB'
+try { New-Item -ItemType Directory -Path $script:MfgStateDir -Force | Out-Null } catch {}
+try { New-Item -ItemType Directory -Path $script:MfgBackupRoot -Force | Out-Null } catch {}
+
+function Get-MfgSha256 {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
+}
+
+function Get-MfgBridgeDll {
+    if (Test-Path -LiteralPath $script:MfgBundledDll -PathType Leaf) {
+        if ((Get-MfgSha256 -Path $script:MfgBundledDll) -eq $script:MfgExpectedSha256) { return $script:MfgBundledDll }
+        throw 'The local NVIDIA MFG Bridge DLL failed its SHA-256 check.'
+    }
+    $cacheDir = Join-Path $DataDir 'PULSE-MFG-Bundle'
+    $cacheDll = Join-Path $cacheDir 'nvngx.dll'
+    if (Test-Path -LiteralPath $cacheDll -PathType Leaf) {
+        if ((Get-MfgSha256 -Path $cacheDll) -eq $script:MfgExpectedSha256) { return $cacheDll }
+        Write-MfgLog 'Cached MFG Bridge DLL failed its SHA-256 check; downloading a clean copy.' 'WARN'
+        Remove-Item -LiteralPath $cacheDll -Force -ErrorAction SilentlyContinue
+    }
+    New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+    $tempDll = Join-Path $cacheDir ('nvngx.dll.download-' + [guid]::NewGuid().ToString('N'))
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        Write-MfgLog 'Downloading NVIDIA MFG Bridge 0.507 from the PULSE GitHub Release...' 'INFO'
+        Invoke-WebRequest -Uri $script:MfgDownloadUrl -UseBasicParsing -OutFile $tempDll -ErrorAction Stop
+        $downloadHash = Get-MfgSha256 -Path $tempDll
+        if ($downloadHash -ne $script:MfgExpectedSha256) { throw 'Downloaded DLL SHA-256 does not match the published MFG Bridge 0.507 file.' }
+        Move-Item -LiteralPath $tempDll -Destination $cacheDll -Force -ErrorAction Stop
+        Write-MfgLog 'MFG Bridge 0.507 downloaded and SHA-256 verified.' 'OK'
+        return $cacheDll
+    } catch {
+        Remove-Item -LiteralPath $tempDll -Force -ErrorAction SilentlyContinue
+        throw ('Could not get the MFG Bridge release asset. Publish nvngx.dll to the latest GitHub Release, then retry. ' + $_.Exception.Message)
+    }
+}
+function Get-MfgGameKey {
+    param([Parameter(Mandatory=$true)][string]$GamePath)
+    $full = [System.IO.Path]::GetFullPath($GamePath).TrimEnd('\').ToUpperInvariant()
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($full)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
+function Get-MfgStatePath {
+    param([Parameter(Mandatory=$true)][string]$GamePath)
+    return (Join-Path $script:MfgStateDir ((Get-MfgGameKey -GamePath $GamePath) + '.json'))
+}
+
+function Write-MfgLog {
+    param([string]$Message, [ValidateSet('INFO','OK','WARN','ERR')][string]$Type = 'INFO')
+    $line = '[{0}] [{1}] {2}' -f (Get-Date -Format 'HH:mm:ss'), $Type, $Message
+    try {
+        if ($sync.MfgLogList) {
+            $sync.MfgLogList.Items.Insert(0, $line)
+            while ($sync.MfgLogList.Items.Count -gt 250) { $sync.MfgLogList.Items.RemoveAt($sync.MfgLogList.Items.Count - 1) }
+        }
+    } catch {}
+    try { Write-Log ('[MFG] ' + $Message) $Type } catch {}
+}
+
+function Set-MfgStatus {
+    param([string]$Text, [string]$Color = '#8B8C90')
+    try {
+        $sync.MfgStatusText.Text = $Text
+        $sync.MfgStatusDot.Fill = (New-Object System.Windows.Media.BrushConverter).ConvertFromString($Color)
+    } catch {}
+}
+
+function Save-MfgUiConfig {
+    try {
+        $config = [ordered]@{
+            GamePath = [string]$sync.MfgGamePathBox.Text
+            Target   = [string]$sync.MfgTargetNameCombo.SelectedItem.Content
+        }
+        $config | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $script:MfgConfigFile -Encoding UTF8 -ErrorAction Stop
+    } catch { Write-MfgLog ('Could not save MFG settings: ' + $_.Exception.Message) 'WARN' }
+}
+
+function Load-MfgUiConfig {
+    try {
+        if (Test-Path -LiteralPath $script:MfgConfigFile -PathType Leaf) {
+            $cfg = Get-Content -LiteralPath $script:MfgConfigFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+            if ($cfg.GamePath) { $sync.MfgGamePathBox.Text = [string]$cfg.GamePath }
+            if ($cfg.Target) {
+                foreach ($item in $sync.MfgTargetNameCombo.Items) {
+                    if ([string]$item.Content -eq [string]$cfg.Target) { $sync.MfgTargetNameCombo.SelectedItem = $item; break }
+                }
+            }
+        }
+    } catch { Write-MfgLog ('Could not load saved MFG settings: ' + $_.Exception.Message) 'WARN' }
+}
+
+function Update-MfgStatus {
+    $gamePath = [string]$sync.MfgGamePathBox.Text
+    if ([string]::IsNullOrWhiteSpace($gamePath) -or -not (Test-Path -LiteralPath $gamePath -PathType Container)) {
+        Set-MfgStatus 'SELECT GAME FOLDER' '#FFB020'
+        return
+    }
+    $stateFile = Get-MfgStatePath -GamePath $gamePath
+    if (-not (Test-Path -LiteralPath $stateFile -PathType Leaf)) {
+        Set-MfgStatus 'NOT ENABLED' '#8B8C90'
+        return
+    }
+    try {
+        $state = Get-Content -LiteralPath $stateFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ((Test-Path -LiteralPath $state.TargetPath -PathType Leaf) -and (Get-MfgSha256 -Path $state.TargetPath) -eq [string]$state.InstalledHash) {
+            Set-MfgStatus 'ENABLED - DLL VERIFIED' '#33D17A'
+        } else {
+            Set-MfgStatus 'CHECK REQUIRED' '#FFB020'
+        }
+    } catch { Set-MfgStatus 'STATE READ ERROR' '#FF4D4D' }
+}
+
+function Browse-MfgGameFolder {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dlg = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dlg.Description = 'Select the actual game folder (the folder containing the game executable).'
+    $dlg.ShowNewFolderButton = $false
+    $current = [string]$sync.MfgGamePathBox.Text
+    if ($current -and (Test-Path -LiteralPath $current -PathType Container)) { $dlg.SelectedPath = $current }
+    if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $sync.MfgGamePathBox.Text = $dlg.SelectedPath
+        Save-MfgUiConfig
+        Update-MfgStatus
+        Write-MfgLog ('Game folder selected: ' + $dlg.SelectedPath) 'INFO'
+    }
+}
+
+function Enable-MfgForSelectedGame {
+    $gamePath = [string]$sync.MfgGamePathBox.Text
+    $sourceDll = $null
+    $targetName = [string]$sync.MfgTargetNameCombo.SelectedItem.Content
+
+    if ([string]::IsNullOrWhiteSpace($gamePath) -or -not (Test-Path -LiteralPath $gamePath -PathType Container)) {
+        [void][System.Windows.MessageBox]::Show($sync.Form, 'Select an existing game folder first.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); return
+    }
+    try {
+        $sourceDll = Get-MfgBridgeDll
+    } catch {
+        Write-MfgLog ($_.Exception.Message) 'ERR'
+        [void][System.Windows.MessageBox]::Show($sync.Form, $_.Exception.Message, 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        return
+    }
+    if ([IO.Path]::GetExtension($sourceDll) -ine '.dll' -or [IO.Path]::GetFileName($sourceDll) -ine 'nvngx.dll') {
+        [void][System.Windows.MessageBox]::Show($sync.Form, 'The NVIDIA MFG Bridge source must be the nvngx.dll file. Check the published GitHub Release asset.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); return
+    }
+    $gamePath = [IO.Path]::GetFullPath($gamePath).TrimEnd('\')
+    $targetPath = Join-Path $gamePath $targetName
+    $stateFile = Get-MfgStatePath -GamePath $gamePath
+    $gameKey = Get-MfgGameKey -GamePath $gamePath
+
+    if (Test-Path -LiteralPath $stateFile -PathType Leaf) {
+        try {
+            $oldState = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
+            if ((Test-Path -LiteralPath $oldState.TargetPath -PathType Leaf) -and (Get-MfgSha256 -Path $oldState.TargetPath) -eq [string]$oldState.InstalledHash) {
+                Set-MfgStatus 'ENABLED - DLL VERIFIED' '#33D17A'
+                Write-MfgLog 'This game folder already has a managed MFG installation. Disable it before changing the loader.' 'WARN'
+                return
+            }
+            [void][System.Windows.MessageBox]::Show($sync.Form, 'A previous MFG state exists but its DLL no longer matches the recorded hash. No changes were made. Use Disable/Restore or inspect the folder manually first.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+            Set-MfgStatus 'CHECK REQUIRED' '#FFB020'
+            return
+        } catch {
+            Write-MfgLog ('Could not read previous state: ' + $_.Exception.Message) 'ERR'; return
+        }
+    }
+
+    $warning = @"
+Install the selected MFG Bridge DLL in:
+$gamePath
+
+Target file: $targetName
+
+PULSE will back up an existing target file before replacing it. This is a per-game hook, not a global driver switch. Use single-player games only; anti-cheat software may flag DLL hooks. RTX 20-series behavior is experimental.
+
+Continue?
+"@
+    if ([System.Windows.MessageBox]::Show($sync.Form, $warning, 'Enable MFG - Confirm', [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning) -ne [System.Windows.MessageBoxResult]::Yes) { return }
+
+    $backupPath = ''
+    $backupHash = ''
+    $originalTargetHash = ''
+    $sourceHash = $null
+    $stagePath = Join-Path $gamePath ('.pulse-mfg-stage-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        $sourceHash = Get-MfgSha256 -Path $sourceDll
+        if (-not $sourceHash) { throw 'Could not calculate the source DLL hash.' }
+        Copy-Item -LiteralPath $sourceDll -Destination $stagePath -ErrorAction Stop
+        if ((Get-MfgSha256 -Path $stagePath) -ne $sourceHash) { throw 'Staged file hash does not match the source DLL.' }
+
+        if (Test-Path -LiteralPath $targetPath -PathType Leaf) {
+            $originalTargetHash = Get-MfgSha256 -Path $targetPath
+            $backupDir = Join-Path $script:MfgBackupRoot $gameKey
+            New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+            $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+            $backupPath = Join-Path $backupDir ($stamp + '-' + $targetName + '.bak')
+            Copy-Item -LiteralPath $targetPath -Destination $backupPath -ErrorAction Stop
+            $backupHash = Get-MfgSha256 -Path $backupPath
+            if (-not $backupHash -or $backupHash -ne $originalTargetHash) { throw 'Backup verification failed. The target file was not replaced.' }
+            Remove-Item -LiteralPath $targetPath -Force -ErrorAction Stop
+        }
+
+        Move-Item -LiteralPath $stagePath -Destination $targetPath -ErrorAction Stop
+        $installedHash = Get-MfgSha256 -Path $targetPath
+        if (-not $installedHash -or $installedHash -ne $sourceHash) { throw 'Installed DLL verification failed.' }
+        $state = [ordered]@{
+            GamePath = $gamePath
+            TargetPath = $targetPath
+            TargetName = $targetName
+            SourcePath = $sourceDll
+            SourceHash = $sourceHash
+            InstalledHash = $installedHash
+            BackupPath = $backupPath
+            BackupHash = $backupHash
+            InstalledAt = (Get-Date).ToString('o')
+            Mod = 'NVIDIA MFG Bridge (user-supplied file)'
+        }
+        $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $stateFile -Encoding UTF8 -ErrorAction Stop
+        Save-MfgUiConfig
+        Set-MfgStatus 'ENABLED - DLL VERIFIED' '#33D17A'
+        Write-MfgLog ('Installed and verified ' + $targetName + ' for ' + $gamePath) 'OK'
+        [void][System.Windows.MessageBox]::Show($sync.Form, 'MFG Bridge loader installed and hash-verified. Start the game and check its compatibility. Disable/Restore will remove this managed file and restore any backup.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+    } catch {
+        $err = $_.Exception.Message
+        try { if (Test-Path -LiteralPath $stagePath -PathType Leaf) { Remove-Item -LiteralPath $stagePath -Force -ErrorAction SilentlyContinue } } catch {}
+        # Roll back safely when the installation step fails.
+        try {
+            if ($backupPath -and (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
+                $currentTargetHash = if (Test-Path -LiteralPath $targetPath -PathType Leaf) { Get-MfgSha256 -Path $targetPath } else { $null }
+                $backupIsOriginal = $originalTargetHash -and ((Get-MfgSha256 -Path $backupPath) -eq $originalTargetHash)
+                if ($currentTargetHash -and $currentTargetHash -eq $originalTargetHash) {
+                    # The original target is still intact: do not replace it during rollback.
+                } elseif ($backupIsOriginal) {
+                    if ($currentTargetHash -and $currentTargetHash -eq $sourceHash) { Remove-Item -LiteralPath $targetPath -Force -ErrorAction SilentlyContinue }
+                    if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) { Copy-Item -LiteralPath $backupPath -Destination $targetPath -Force -ErrorAction SilentlyContinue }
+                }
+            } elseif (Test-Path -LiteralPath $targetPath -PathType Leaf) {
+                if ((Get-MfgSha256 -Path $targetPath) -eq $sourceHash) { Remove-Item -LiteralPath $targetPath -Force -ErrorAction SilentlyContinue }
+            }
+        } catch {}
+        Write-MfgLog ('Enable failed: ' + $err) 'ERR'
+        Set-MfgStatus 'ENABLE FAILED' '#FF4D4D'
+        [void][System.Windows.MessageBox]::Show($sync.Form, ('Installation failed and rollback was attempted.' + "`n`n" + $err), 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    } finally {
+        try { if (Test-Path -LiteralPath $stagePath -PathType Leaf) { Remove-Item -LiteralPath $stagePath -Force -ErrorAction SilentlyContinue } } catch {}
+    }
+}
+
+function Disable-MfgForSelectedGame {
+    $gamePath = [string]$sync.MfgGamePathBox.Text
+    if ([string]::IsNullOrWhiteSpace($gamePath) -or -not (Test-Path -LiteralPath $gamePath -PathType Container)) {
+        [void][System.Windows.MessageBox]::Show($sync.Form, 'Select the same game folder that was used when enabling MFG.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); return
+    }
+    $gamePath = [IO.Path]::GetFullPath($gamePath).TrimEnd('\')
+    $stateFile = Get-MfgStatePath -GamePath $gamePath
+    if (-not (Test-Path -LiteralPath $stateFile -PathType Leaf)) {
+        Set-MfgStatus 'NOT ENABLED' '#8B8C90'
+        Write-MfgLog 'No PULSE-managed MFG installation was found for this game folder. No file was removed.' 'WARN'
+        [void][System.Windows.MessageBox]::Show($sync.Form, 'No PULSE-managed installation was found for this folder. PULSE will not delete DLLs it did not install and track.', 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        return
+    }
+    try {
+        $state = Get-Content -LiteralPath $stateFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ([IO.Path]::GetFullPath([string]$state.GamePath).TrimEnd('\') -ine $gamePath) { throw 'State file game-folder mismatch.' }
+        $targetPath = [string]$state.TargetPath
+        $backupPath = [string]$state.BackupPath
+        $currentHash = if (Test-Path -LiteralPath $targetPath -PathType Leaf) { Get-MfgSha256 -Path $targetPath } else { $null }
+        $matches = ($currentHash -and $currentHash -eq [string]$state.InstalledHash)
+        $hasBackup = ($backupPath -and (Test-Path -LiteralPath $backupPath -PathType Leaf))
+        if ($hasBackup -and (Get-MfgSha256 -Path $backupPath) -ne [string]$state.BackupHash) {
+            throw 'The original backup failed its hash check. Nothing was changed; keep the backup and inspect it manually.'
+        }
+        if (-not $matches -and $currentHash) {
+            $question = "The target DLL has changed since PULSE installed it.`n`nYes = move the changed file into the PULSE recovery folder, then restore the original backup (if available).`nNo = cancel and leave everything untouched.`n`nContinue?"
+            if ([System.Windows.MessageBox]::Show($sync.Form, $question, 'MFG Restore - Changed DLL', [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning) -ne [System.Windows.MessageBoxResult]::Yes) { return }
+            $recoveryDir = Join-Path (Join-Path $script:MfgBackupRoot 'Recovery') (Get-MfgGameKey -GamePath $gamePath)
+            New-Item -ItemType Directory -Path $recoveryDir -Force | Out-Null
+            $recoveryPath = Join-Path $recoveryDir ((Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [IO.Path]::GetFileName($targetPath) + '.recovered')
+            Move-Item -LiteralPath $targetPath -Destination $recoveryPath -ErrorAction Stop
+            Write-MfgLog ('Moved changed DLL to recovery: ' + $recoveryPath) 'WARN'
+        } elseif ($matches) {
+            Remove-Item -LiteralPath $targetPath -Force -ErrorAction Stop
+        }
+        if ($hasBackup) {
+            Copy-Item -LiteralPath $backupPath -Destination $targetPath -Force -ErrorAction Stop
+            if ((Get-MfgSha256 -Path $targetPath) -ne [string]$state.BackupHash) { throw 'Restored file hash did not match the verified backup. Backup file remains preserved.' }
+            Write-MfgLog ('Restored original file: ' + $targetPath) 'OK'
+        } else {
+            Write-MfgLog ('Removed PULSE-managed MFG loader: ' + $targetPath) 'OK'
+        }
+        Remove-Item -LiteralPath $stateFile -Force -ErrorAction Stop
+        Set-MfgStatus 'DISABLED - RESTORED' '#33D17A'
+    } catch {
+        Write-MfgLog ('Disable/restore failed: ' + $_.Exception.Message) 'ERR'
+        Set-MfgStatus 'RESTORE NEEDS ATTENTION' '#FF4D4D'
+        [void][System.Windows.MessageBox]::Show($sync.Form, ('Could not safely finish disabling MFG. State and backups were preserved where possible.' + "`n`n" + $_.Exception.Message), 'MFG Lab', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    }
+    Update-MfgStatus
+}
+
+# Wire page controls after XAML objects have been loaded.
+$sync.MfgBrowseGameButton.Add_Click({ Browse-MfgGameFolder })
+$sync.MfgEnableButton.Add_Click({ Enable-MfgForSelectedGame })
+$sync.MfgDisableButton.Add_Click({ Disable-MfgForSelectedGame })
+$sync.MfgRefreshButton.Add_Click({ Update-MfgStatus; Write-MfgLog 'MFG status refreshed.' 'INFO' })
+$sync.MfgGamePathBox.Add_LostFocus({ Save-MfgUiConfig; Update-MfgStatus })
+$sync.MfgTargetNameCombo.Add_SelectionChanged({ Save-MfgUiConfig })
+Load-MfgUiConfig
+Update-MfgStatus
+Write-MfgLog 'MFG Lab ready. NVIDIA MFG Bridge 0.507 is fetched from the PULSE GitHub Release when needed.' 'INFO'
 
 $ctrl.lblBuild.Text   = $BuildVersion
 $ctrl.lblVersion.Text = '  |  v' + $BuildVersion
