@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  PULSE | Gaming Tweak - v2.1 MFG Lab (WPF)
+  PULSE | Gaming Tweak - v2.1 MFG Lab Preview (WPF)
   Brand : KFLI // The Digital Shadow
   ------------------------------------------------------------
   Pages:
@@ -6810,6 +6810,297 @@ function Invoke-WPFSystemRepair {
     Set-WinUtilTaskbaritem -state "None" -overlay "checkmark"
 }
 
+# Signed, device-bound offline license. The private signing key never ships with PULSE.
+$script:KfliLicensePublicKeyXml = '<RSAKeyValue><Modulus>ypvmgya4ZfYjjZHEnsIqrL5tsA9GzdgihCMi+uaLTSUs5J/u49z5sR/X1ChsSc/tkU+CuicgEjoI3qmCEKLZ9cvfh/fTOH0YFBQOoKBW2wEjbLu+S3TudlWIjwO01xYL9N+h6qG9UeAlDyVzqtLHR5Gx0hQ7hTmyPb/eohHtSsN8bAPS9JC0cPDKt+DN9XCaRrz2iYXE4x8Zqsc8iraCJnwwEYWKjariV6dfuXqUju4B/DEITTreQDmiklMMZM7x0Y1uKUMZWLdg5Hr90vRJTUaFlxBQuWMEiAUM0dGyBnFtMCD8BpFQPvwExkM0SYm+AYlsQ7xW7RwRZIFnG6wZVaQpU5WkEPcu2jUX/L8NG1WVJmFvwXlq59ZF5I7M2694OU70GqSUwH1hsXPTHcSFv7fWlkrYT5+Ms0yo5/DFbr/yEAeyae4130dqwCtiFbvDgCzAMqak+H72tcQF2bAn6FevH+A4cVkO251wD1nyTLqMEO0rSUOusj1jY/AcO3yZ</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>'
+$script:KfliLicenseDir = Join-Path $env:LOCALAPPDATA 'PULSE'
+try { New-Item -ItemType Directory -Path $script:KfliLicenseDir -Force | Out-Null } catch {}
+$script:KfliLicenseFile = Join-Path $script:KfliLicenseDir 'PULSE-License.dat'
+$script:KfliLicenseApiBaseUrl = 'https://kfli-license-service.kfli.workers.dev'
+
+function Test-KfliLicenseApiConfigured {
+    return -not [string]::IsNullOrWhiteSpace($script:KfliLicenseApiBaseUrl) -and $script:KfliLicenseApiBaseUrl -notmatch 'YOUR-SUBDOMAIN'
+}
+
+function Invoke-KfliLicenseApiPost {
+    param([Parameter(Mandatory=$true)][string]$Path,[Parameter(Mandatory=$true)][hashtable]$Data)
+    if (-not (Test-KfliLicenseApiConfigured)) { throw 'Online licensing is not configured in this PULSE build yet.' }
+    $uri = $script:KfliLicenseApiBaseUrl.TrimEnd('/') + $Path
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    return Invoke-RestMethod -Uri $uri -Method Post -ContentType 'application/json' -Body ($Data | ConvertTo-Json -Compress) -TimeoutSec 8 -ErrorAction Stop
+}
+
+function Get-KfliDeviceId {
+    $machineGuid = [string](Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Cryptography' -Name MachineGuid -ErrorAction Stop).MachineGuid
+    if ([string]::IsNullOrWhiteSpace($machineGuid)) { throw 'Could not read this PC device identifier.' }
+    $bytes = [Text.Encoding]::UTF8.GetBytes('KFLI-PULSE|' + $machineGuid.Trim().ToLowerInvariant())
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '') }
+    finally { $sha.Dispose() }
+}
+
+function ConvertTo-KfliBase64Url {
+    param([byte[]]$Bytes)
+    return [Convert]::ToBase64String($Bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+}
+
+function ConvertFrom-KfliBase64Url {
+    param([string]$Text)
+    $value = $Text.Replace('-','+').Replace('_','/')
+    switch ($value.Length % 4) { 2 { $value += '==' } 3 { $value += '=' } 1 { throw 'Invalid activation code encoding.' } }
+    return [Convert]::FromBase64String($value)
+}
+
+function Get-KfliLicenseClaims {
+    param([Parameter(Mandatory=$true)][string]$Token)
+    $parts = ($Token -replace '\s','').Split('.')
+    if ($parts.Count -ne 3 -or $parts[0] -ne 'KFLI1') { return $null }
+    $rsa = New-Object Security.Cryptography.RSACryptoServiceProvider
+    try {
+        $rsa.FromXmlString($script:KfliLicensePublicKeyXml)
+        $signedBytes = [Text.Encoding]::ASCII.GetBytes($parts[1])
+        $signature = ConvertFrom-KfliBase64Url $parts[2]
+        if (-not $rsa.VerifyData($signedBytes, [Security.Cryptography.CryptoConfig]::MapNameToOID('SHA256'), $signature)) { return $null }
+    } catch { return $null }
+    finally { $rsa.Dispose() }
+    try {
+        $payloadBytes = ConvertFrom-KfliBase64Url $parts[1]
+        return ([Text.Encoding]::UTF8.GetString($payloadBytes) | ConvertFrom-Json -ErrorAction Stop)
+    } catch { return $null }
+}
+
+function Save-KfliLicenseToken {
+    param([Parameter(Mandatory=$true)][string]$Token)
+    Add-Type -AssemblyName System.Security -ErrorAction Stop
+    $claims = Get-KfliLicenseClaims -Token $Token
+    if (-not $claims) { throw 'That activation code is invalid.' }
+    if ([string]$claims.deviceId -ne (Get-KfliDeviceId)) { throw 'This activation code belongs to a different PC.' }
+    $now = [DateTime]::UtcNow
+    $expires = [DateTime]::Parse([string]$claims.expiresUtc).ToUniversalTime()
+    if ($now -ge $expires) { throw 'This activation code has expired.' }
+    $state = [ordered]@{ Token = $Token.Trim(); LastSeenUtc = $now.ToString('o') } | ConvertTo-Json -Compress
+    $protected = [Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($state), $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
+    [IO.File]::WriteAllBytes($script:KfliLicenseFile, $protected)
+    return $claims
+}
+
+function Get-KfliStoredLicense {
+    if (-not (Test-Path -LiteralPath $script:KfliLicenseFile -PathType Leaf)) { return $null }
+    try {
+        Add-Type -AssemblyName System.Security -ErrorAction Stop
+        $protected = [IO.File]::ReadAllBytes($script:KfliLicenseFile)
+        $clear = [Security.Cryptography.ProtectedData]::Unprotect($protected, $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $state = [Text.Encoding]::UTF8.GetString($clear) | ConvertFrom-Json -ErrorAction Stop
+        $now = [DateTime]::UtcNow
+        $lastSeen = [DateTime]::Parse([string]$state.LastSeenUtc).ToUniversalTime()
+        if ($now.AddMinutes(2) -lt $lastSeen) { return $null }
+        $claims = Get-KfliLicenseClaims -Token ([string]$state.Token)
+        if (-not $claims -or [string]$claims.deviceId -ne (Get-KfliDeviceId)) { return $null }
+        if ($now -ge [DateTime]::Parse([string]$claims.expiresUtc).ToUniversalTime()) { return $null }
+        if ($claims.issuer -eq 'cloud' -and (Test-KfliLicenseApiConfigured)) {
+            $lastServerCheck = [DateTime]::MinValue
+            if ($state.LastServerCheckUtc) { try { $lastServerCheck = [DateTime]::Parse([string]$state.LastServerCheckUtc).ToUniversalTime() } catch {} }
+            if (($now - $lastServerCheck).TotalHours -ge 24) {
+                try {
+                    $serverState = Invoke-KfliLicenseApiPost -Path '/api/license/check' -Data @{ licenseId=[string]$claims.licenseId; deviceId=(Get-KfliDeviceId) }
+                    $state.LastServerCheckUtc = $now.ToString('o')
+                    if (-not $serverState.valid) { Remove-Item -LiteralPath $script:KfliLicenseFile -Force -ErrorAction SilentlyContinue; return $null }
+                    if (-not [string]::IsNullOrWhiteSpace([string]$serverState.licenseToken) -and [string]$serverState.licenseToken -ne [string]$state.Token) {
+                        $renewedClaims = Get-KfliLicenseClaims -Token ([string]$serverState.licenseToken)
+                        if ($renewedClaims -and [string]$renewedClaims.deviceId -eq (Get-KfliDeviceId) -and $renewedClaims.issuer -eq 'cloud') {
+                            $state.Token = [string]$serverState.licenseToken
+                            $claims = $renewedClaims
+                        }
+                    }
+                } catch {
+                    $state.LastServerCheckUtc = $now.AddHours(-23).ToString('o')
+                }
+            }
+        }
+        $state.LastSeenUtc = $now.ToString('o')
+        $json = $state | ConvertTo-Json -Compress
+        $next = [Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($json), $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
+        [IO.File]::WriteAllBytes($script:KfliLicenseFile, $next)
+        return $claims
+    } catch { return $null }
+}
+
+# Keygen licensing for protected PULSE features. Only the public Keygen account slug is configured here;
+# never embed an admin, environment, or product secret token in a client script.
+$script:KfliKeygenConfigFile = Join-Path $script:KfliLicenseDir 'PULSE-Keygen.json'
+$script:KfliKeygenStateFile = Join-Path $script:KfliLicenseDir 'PULSE-KeygenLicense.dat'
+$script:KfliKeygenApiBase = 'https://api.keygen.sh/v1/accounts/'
+
+function Get-KfliKeygenConfig {
+    if (-not (Test-Path -LiteralPath $script:KfliKeygenConfigFile -PathType Leaf)) {
+        $template = [ordered]@{ Account = 'ca7ad330-3296-45f7-b823-dbda449acc1c'; RequireDeviceFingerprint = $true }
+        $template | ConvertTo-Json | Set-Content -LiteralPath $script:KfliKeygenConfigFile -Encoding UTF8
+    }
+    try { return (Get-Content -LiteralPath $script:KfliKeygenConfigFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop) }
+    catch { throw ('Could not read Keygen configuration: ' + $_.Exception.Message) }
+}
+
+function Get-KfliKeygenFingerprint {
+    return Get-KfliDeviceId
+}
+
+function Invoke-KfliKeygenRequest {
+    param(
+        [Parameter(Mandatory=$true)][string]$Account,
+        [Parameter(Mandatory=$true)][string]$Path,
+        [hashtable]$Data,
+        [string]$LicenseKey,
+        [ValidateSet('GET','POST')][string]$Method = 'POST'
+    )
+    $accountPart = [Uri]::EscapeDataString($Account.Trim())
+    $uri = $script:KfliKeygenApiBase + $accountPart + '/' + $Path.TrimStart('/')
+    $headers = @{ Accept = 'application/vnd.api+json' }
+    if (-not [string]::IsNullOrWhiteSpace($LicenseKey)) { $headers.Authorization = 'License ' + $LicenseKey.Trim() }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    if ($Method -eq 'GET') {
+        return Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -TimeoutSec 15 -ErrorAction Stop
+    }
+    return Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -ContentType 'application/vnd.api+json' -Body ($Data | ConvertTo-Json -Depth 8 -Compress) -TimeoutSec 15 -ErrorAction Stop
+}
+
+function Get-KfliKeygenLicenseId {
+    param([Parameter(Mandatory=$true)][string]$LicenseKey,[Parameter(Mandatory=$true)]$Config)
+    $identity = Invoke-KfliKeygenRequest -Account ([string]$Config.Account) -Path 'me' -Method GET -LicenseKey $LicenseKey
+    if ([string]$identity.data.type -ne 'licenses' -or [string]::IsNullOrWhiteSpace([string]$identity.data.id)) {
+        throw 'Keygen did not return a license identity for this key.'
+    }
+    return [string]$identity.data.id
+}
+
+function Get-KfliStoredKeygenLicenseKey {
+    if (-not (Test-Path -LiteralPath $script:KfliKeygenStateFile -PathType Leaf)) { return $null }
+    try {
+        Add-Type -AssemblyName System.Security -ErrorAction Stop
+        $protected = [IO.File]::ReadAllBytes($script:KfliKeygenStateFile)
+        $clear = [Security.Cryptography.ProtectedData]::Unprotect($protected, $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $state = [Text.Encoding]::UTF8.GetString($clear) | ConvertFrom-Json -ErrorAction Stop
+        if ([string]$state.Fingerprint -ne (Get-KfliKeygenFingerprint)) { return $null }
+        return [string]$state.LicenseKey
+    } catch { return $null }
+}
+
+function Save-KfliKeygenLicenseKey {
+    param([Parameter(Mandatory=$true)][string]$LicenseKey)
+    Add-Type -AssemblyName System.Security -ErrorAction Stop
+    $state = [ordered]@{
+        LicenseKey = $LicenseKey.Trim()
+        Fingerprint = Get-KfliKeygenFingerprint
+        SavedUtc = [DateTime]::UtcNow.ToString('o')
+    } | ConvertTo-Json -Compress
+    $protected = [Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($state), $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
+    [IO.File]::WriteAllBytes($script:KfliKeygenStateFile, $protected)
+}
+
+function Test-KfliKeygenLicenseKey {
+    param([Parameter(Mandatory=$true)][string]$LicenseKey,[Parameter(Mandatory=$true)]$Config)
+    $result = Invoke-KfliKeygenRequest -Account ([string]$Config.Account) -Path 'licenses/actions/validate-key' -Data @{
+        meta = @{ key = $LicenseKey.Trim(); scope = @{ fingerprint = (Get-KfliKeygenFingerprint) } }
+    }
+    return $result
+}
+
+function Show-KfliLicenseActivation {
+    Add-Type -AssemblyName System.Windows.Forms
+    $config = $null
+    try { $config = Get-KfliKeygenConfig }
+    catch {
+        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'PULSE license setup', [Windows.Forms.MessageBoxButtons]::OK, [Windows.Forms.MessageBoxIcon]::Warning) | Out-Null
+        return $false
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$config.Account) -or [string]$config.Account -match '^YOUR-') {
+        $message = "Keygen account is not configured yet.`r`nOpen this file and replace Account with your Keygen account slug:`r`n$script:KfliKeygenConfigFile`r`n`r`nIn Keygen, create a PULSE product and a policy that requires a machine fingerprint and allows one machine per license."
+        [Windows.Forms.MessageBox]::Show($message, 'PULSE license setup', [Windows.Forms.MessageBoxButtons]::OK, [Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+        return $false
+    }
+
+    $form = New-Object Windows.Forms.Form
+    $form.Text = 'Activate PULSE'
+    $form.Width = 470; $form.Height = 220; $form.StartPosition = 'CenterScreen'; $form.FormBorderStyle = 'FixedDialog'; $form.MaximizeBox = $false; $form.MinimizeBox = $false
+    $label = New-Object Windows.Forms.Label; $label.Text = 'Enter the PULSE license key provided by KFLI.'; $label.SetBounds(18,18,420,25); $label.Font = New-Object Drawing.Font('Segoe UI',10,[Drawing.FontStyle]::Bold)
+    $keyBox = New-Object Windows.Forms.TextBox; $keyBox.SetBounds(18,55,418,28); $keyBox.Font = New-Object Drawing.Font('Consolas',10); $keyBox.MaxLength = 160
+    $status = New-Object Windows.Forms.Label; $status.Text = 'The license will be linked to this PC.'; $status.SetBounds(18,91,418,38); $status.AutoSize = $false
+    $activate = New-Object Windows.Forms.Button; $activate.Text = 'Activate'; $activate.SetBounds(252,145,90,30)
+    $cancel = New-Object Windows.Forms.Button; $cancel.Text = 'Cancel'; $cancel.SetBounds(346,145,90,30); $cancel.DialogResult = [Windows.Forms.DialogResult]::Cancel
+    $activate.Add_Click(({
+        $key = [string]$keyBox.Text
+        if ([string]::IsNullOrWhiteSpace($key)) { $status.Text = 'Enter your license key first.'; return }
+        $activate.Enabled = $false; $status.Text = 'Checking license and linking this PC...'; $form.Refresh()
+        try {
+            $validation = Test-KfliKeygenLicenseKey -LicenseKey $key -Config $config
+            # With requireFingerprintScope enabled, a new license has no machine yet,
+            # so Keygen correctly reports FINGERPRINT_SCOPE_MISMATCH on the first check.
+            # Allow only that specific pre-activation result; all other invalid states fail closed.
+            $validationCode = [string]$validation.meta.code
+            $needsActivation = ($validationCode -eq 'NO_MACHINE')
+            if (-not $validation.meta.valid -and -not $needsActivation) {
+                if ($validationCode -eq 'FINGERPRINT_SCOPE_MISMATCH') {
+                    $status.Text = 'This license is already activated on another device.'
+                } else {
+                    $status.Text = 'Keygen rejected this key. Code: ' + $(if ($validationCode) { $validationCode } else { 'UNKNOWN' })
+                }
+                $activate.Enabled = $true; return
+            }
+            $licenseId = [string]$validation.data.id
+            if ([string]::IsNullOrWhiteSpace($licenseId) -and $needsActivation) {
+                # NO_MACHINE is Keygen's first-activation state for a node-locked license.
+                # Resolve the license identity with the license key before creating its first machine.
+                $licenseId = Get-KfliKeygenLicenseId -LicenseKey $key -Config $config
+            }
+            if ([string]::IsNullOrWhiteSpace($licenseId)) {
+                $status.Text = 'Keygen did not return a license ID. Code: ' + $(if ($validationCode) { $validationCode } else { 'NO_LICENSE_ID' }); $activate.Enabled = $true; return
+            }
+            $machineBody = @{
+                data = @{
+                    type = 'machines'
+                    attributes = @{ fingerprint = (Get-KfliKeygenFingerprint); name = ('PULSE-' + $env:COMPUTERNAME); platform = 'windows' }
+                    relationships = @{ license = @{ data = @{ type = 'licenses'; id = $licenseId } } }
+                }
+            }
+            try {
+                [void](Invoke-KfliKeygenRequest -Account ([string]$config.Account) -Path 'machines' -Data $machineBody -LicenseKey $key)
+            } catch {
+                # Revalidation with the same required fingerprint accepts a retry on a PC already activated.
+                $retryValidation = Test-KfliKeygenLicenseKey -LicenseKey $key -Config $config
+                if (-not $retryValidation.meta.valid) { throw }
+            }
+            $afterActivation = Test-KfliKeygenLicenseKey -LicenseKey $key -Config $config
+            if (-not $afterActivation.meta.valid) { throw 'Keygen did not validate the device-bound license after activation.' }
+            Save-KfliKeygenLicenseKey -LicenseKey $key
+            $form.Tag = $true; $form.Close()
+        } catch {
+            $detail = [string]$_.Exception.Message
+            if ($detail.Length -gt 180) { $detail = $detail.Substring(0,180) }
+            $status.Text = 'Activation failed: ' + $detail
+            $activate.Enabled = $true
+        }
+    }).GetNewClosure())
+    $form.Controls.AddRange(@($label,$keyBox,$status,$activate,$cancel)); $form.AcceptButton = $activate; $form.CancelButton = $cancel
+    [void]$form.ShowDialog()
+    return [bool]$form.Tag
+}
+
+function Test-KfliLicense {
+    param([Parameter(Mandatory=$true)][ValidateSet('Tweaks','MFG')][string]$Feature)
+    $config = $null
+    try { $config = Get-KfliKeygenConfig } catch { return $false }
+    if ([string]::IsNullOrWhiteSpace([string]$config.Account) -or [string]$config.Account -match '^YOUR-') { return $false }
+    $key = Get-KfliStoredKeygenLicenseKey
+    if ([string]::IsNullOrWhiteSpace($key)) { return $false }
+    try {
+        $result = Test-KfliKeygenLicenseKey -LicenseKey $key -Config $config
+        return [bool]$result.meta.valid
+    } catch { return $false }
+}
+
+function Require-KfliLicense {
+    param([Parameter(Mandatory=$true)][ValidateSet('Tweaks','MFG')][string]$Feature)
+    if (Test-KfliLicense -Feature $Feature) { return $true }
+    return Show-KfliLicenseActivation
+}
 function Invoke-WPFTab {
 
     <#
@@ -6830,6 +7121,8 @@ function Invoke-WPFTab {
     $tabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
     $tabNumber = [int]($ClickedTab -replace "WPFTab","" -replace "BT","") - 1
 
+    # Keep navigation available. License checks belong to protected actions,
+    # not page selection, so the page itself can always be opened and explained.
     $filter = Get-WinUtilVariables -Type ToggleButton | Where-Object {$psitem -like "WPFTab?BT"}
     $sync.$tabNav.Items[$tabNumber].IsSelected = $true
     ($sync.GetEnumerator()).where{$psitem.Key -in $filter} | ForEach-Object {
@@ -6928,6 +7221,8 @@ function Invoke-WPFToggleAllCategories {
 }
 
 function Invoke-WPFtweaksbutton {
+  if (-not (Require-KfliLicense -Feature 'Tweaks')) { return }
+
   <#
 
     .SYNOPSIS
@@ -17617,6 +17912,7 @@ function Browse-MfgGameFolder {
 }
 
 function Enable-MfgForSelectedGame {
+    if (-not (Require-KfliLicense -Feature 'MFG')) { return }
     $gamePath = [string]$sync.MfgGamePathBox.Text
     $sourceDll = $null
     $targetName = [string]$sync.MfgTargetNameCombo.SelectedItem.Content
@@ -21191,3 +21487,6 @@ try { Close-WinUtilRunspacePool } catch {}
 Remove-WinUtilTempScript
 try { Stop-Transcript | Out-Null } catch {}
 [Environment]::Exit(0)
+
+
+
